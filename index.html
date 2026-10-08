@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DigitalDen · Sorteo</title>
+<style>
+:root{--bg:#F4ECF8;--card:#fff;--tx:#2B2630;--mut:#6B6473;--bd:#E3D3EA;--navy:#17151A;--cy:#D9A6EA;--pk:#A84CC0;--vi:#7B2A91;--in:#F4ECF8;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17151A;--card:#211C27;--tx:#F2ECF6;--mut:#C9B5D6;--bd:#3A2C45;--in:#1B1721}}
+:root[data-theme="dark"]{--bg:#17151A;--card:#211C27;--tx:#F2ECF6;--mut:#C9B5D6;--bd:#3A2C45;--in:#1B1721}
+*{box-sizing:inherit}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--navy);color:#fff;padding:22px 16px;text-align:center;border-bottom:3px solid var(--cy)}
+header h1{margin:0;font-size:26px;letter-spacing:2px}header h1 span{color:var(--pk)}
+header p{margin:4px 0 0;color:#C9B5D6;font-size:13px}
+main{max-width:980px;margin:0 auto;padding:16px;display:grid;gap:16px;grid-template-columns:1fr}
+@media(min-width:820px){main{grid-template-columns:1fr 1fr}.full{grid-column:1/-1}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px}
+h2{margin:0 0 10px;font-size:15px;color:var(--vi);text-transform:uppercase;letter-spacing:1px}
+label{display:block;font-size:12.5px;color:var(--mut);margin:9px 0 3px}
+input,select,textarea{width:100%;padding:10px;border-radius:9px;border:1px solid var(--bd);background:var(--in);color:var(--tx);font:inherit}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--cy)}
+.row{display:flex;gap:8px}.row>*{flex:1}
+button{cursor:pointer;border:0;border-radius:10px;padding:11px 14px;font:inherit;font-weight:700;background:var(--vi);color:#fff}
+button.alt{background:var(--pk)}button.ghost{background:transparent;color:var(--vi);border:1px solid var(--vi)}button:disabled{opacity:.45;cursor:not-allowed}
+.stage{background:var(--navy);border-radius:16px;padding:14px;text-align:center}
+.wheelbox{position:relative;max-width:360px;margin:0 auto}
+canvas{width:100%;height:auto;display:block}
+.ptr{position:absolute;left:50%;top:-4px;transform:translateX(-50%);width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:24px solid var(--pk);filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.win{display:none;margin-top:12px;padding:14px;border-radius:12px;background:linear-gradient(135deg,#7B2A91,#A84CC0);color:#fff}
+.win small{opacity:.85;display:block}.win b{font-size:24px;display:block}
+.li{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--bd);font-size:14px}.li b{flex:1}
+.x{padding:3px 9px;background:transparent;color:var(--pk);border:1px solid var(--pk)}
+.mut{color:var(--mut);font-size:13px}.err{color:var(--pk);font-size:13px;min-height:18px;margin-top:6px}
+.chk{display:flex;gap:9px;align-items:center;margin:8px 0;font-size:14px}.chk input{width:auto}
+.h{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px dashed var(--bd);font-size:13.5px}
+</style></head><body>
+<header><h1>DigitalDen <span>SORTEO</span></h1><p>The Home Of Electrics · Sorteo mensual de clientes · Los Santos, San Andreas</p></header>
+<main>
+<section class="card"><h2>1 · Participantes</h2>
+ <div class="row"><input id="pn" placeholder="Nombre del cliente"><input id="pt" type="number" min="1" value="1" style="flex:.4" title="Papeletas"><button id="padd" type="button" style="flex:.5">Añadir</button></div>
+ <label>O pega una lista (una por línea: Nombre, papeletas)</label><textarea id="bulk" rows="3" placeholder="Marcos Valdés, 3&#10;Lucía Ortega, 1"></textarea>
+ <button class="ghost" id="pbulk" type="button" style="margin-top:6px;width:100%">Importar lista</button>
+ <div id="plist" style="margin-top:8px;max-height:260px;overflow:auto"></div>
+ <div class="mut" id="pinfo"></div>
+</section>
+<section class="card"><h2>2 · Premios</h2>
+ <div class="row"><input id="zn" placeholder="Ej: Móvil Phantom"><button id="zadd" type="button" style="flex:.4">Añadir</button></div>
+ <div id="zlist" style="margin-top:8px"></div>
+ <div class="chk"><input type="checkbox" id="uniq" checked><label for="uniq" style="margin:0;color:inherit;font-size:14px">Una persona solo puede ganar un premio</label></div>
+ <div class="mut">Los premios se sortean en orden, de arriba a abajo.</div>
+</section>
+<section class="card full"><div class="stage">
+ <div class="wheelbox"><div class="ptr"></div><canvas id="cv" width="640" height="640"></canvas></div>
+ <div class="win" id="win"><small id="wp"></small><b id="wn"></b></div>
+ <div class="row" style="max-width:360px;margin:12px auto 0"><button class="alt" id="spin" type="button">¡Girar!</button></div>
+ <div class="err" id="err" style="text-align:center"></div>
+</div></section>
+<section class="card full"><h2>Ganadores</h2><div class="mut" id="empty">Aún no hay ganadores.</div><div id="hist"></div>
+ <div class="row" style="margin-top:10px"><button class="ghost" id="copy" type="button">Copiar ganadores</button><button class="ghost" id="reset" type="button">Reiniciar sorteo</button></div></section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const COL=["#7B2A91","#A84CC0","#5E1F70","#9B3FB5","#4A1A5A","#B864CE","#6A2480","#8E3AA6"];
+let P=[["Marcos Valdés",3],["Lucía Ortega",2],["Iván Soto",1],["Carla Reyes",4],["Dani Ferrer",1]].map(a=>({n:a[0],t:a[1],w:false}));
+let Z=["Móvil Phantom","Auriculares Glow","Funda neón personalizada"],W=[],rot=0,busy=false;
+try{const s=JSON.parse(localStorage.getItem("digitalden_sorteo")||"null");if(s){P=s.P;Z=s.Z;W=s.W}}catch(e){}
+const save=()=>{try{localStorage.setItem("digitalden_sorteo",JSON.stringify({P,Z,W}))}catch(e){}};
+const pool=()=>P.filter(p=>!($("uniq").checked&&p.w));
+function lists(){
+ $("plist").innerHTML=P.map((p,i)=>`<div class="li"><b>${p.n}${p.w?" 🏆":""}</b><span class="mut">${p.t} pap.</span><button class="x" data-p="${i}" type="button">✕</button></div>`).join("")||'<div class="mut">Sin participantes.</div>';
+ $("pinfo").textContent=`${P.length} participantes · ${P.reduce((a,p)=>a+p.t,0)} papeletas`;
+ $("zlist").innerHTML=Z.map((z,i)=>`<div class="li"><b>${i+1}. ${z}${i<W.length?" ✔":""}</b><button class="x" data-z="${i}" type="button">✕</button></div>`).join("")||'<div class="mut">Sin premios.</div>';
+ document.querySelectorAll("[data-p]").forEach(e=>e.onclick=()=>{P.splice(+e.dataset.p,1);save();lists();draw()});
+ document.querySelectorAll("[data-z]").forEach(e=>e.onclick=()=>{Z.splice(+e.dataset.z,1);save();lists()});
+ $("hist").innerHTML=W.map(w=>`<div class="h"><span>🏆 ${w.n}</span><b>${w.z}</b></div>`).join("");
+ $("empty").style.display=W.length?"none":"block";
+ $("spin").disabled=busy||W.length>=Z.length||!pool().length;
+}
+function draw(){
+ const c=$("cv"),x=c.getContext("2d"),R=300,cx=320,cy=320,L=pool(),T=L.reduce((a,p)=>a+p.t,0);
+ x.clearRect(0,0,640,640);x.save();x.translate(cx,cy);x.rotate(rot);
+ if(!T){x.fillStyle="#3A2C45";x.beginPath();x.arc(0,0,R,0,7);x.fill();x.fillStyle="#C9B5D6";x.font="bold 26px sans-serif";x.textAlign="center";x.fillText("Sin participantes",0,8)}
+ let a=0;L.forEach((p,i)=>{const s=p.t/T*Math.PI*2;
+  x.beginPath();x.moveTo(0,0);x.arc(0,0,R,a,a+s);x.closePath();x.fillStyle=COL[i%COL.length];x.fill();x.strokeStyle="#17151A";x.lineWidth=3;x.stroke();
+  if(s>0.2){x.save();x.rotate(a+s/2);x.fillStyle="#fff";x.font="bold 22px sans-serif";x.textAlign="right";x.fillText(p.n.length>14?p.n.slice(0,13)+"…":p.n,R-20,8);x.restore()}a+=s});
+ x.restore();
+ x.beginPath();x.arc(cx,cy,34,0,7);x.fillStyle="#17151A";x.fill();x.lineWidth=4;x.strokeStyle="#D9A6EA";x.stroke();
+ x.fillStyle="#D9A6EA";x.font="900 20px sans-serif";x.textAlign="center";x.fillText("D",cx,cy+7);
+}
+$("spin").onclick=()=>{
+ const L=pool(),T=L.reduce((a,p)=>a+p.t,0);if(!T||busy||W.length>=Z.length)return;
+ $("err").textContent="";$("win").style.display="none";busy=true;lists();
+ let r=Math.random()*T,wi=0;for(;wi<L.length;wi++){if(r<L[wi].t)break;r-=L[wi].t}
+ let a0=0;for(let i=0;i<wi;i++)a0+=L[i].t/T*Math.PI*2;
+ const target=a0+(r/L[wi].t)*(L[wi].t/T*Math.PI*2);
+ const start=rot,end=rot+Math.PI*2*(6+Math.floor(Math.random()*3))+(((-Math.PI/2-target-rot)%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+ const dur=5200,t0=performance.now();
+ (function f(now){const k=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-k,4);rot=start+(end-start)*e;draw();
+  if(k<1)return requestAnimationFrame(f);
+  rot=rot%(Math.PI*2);const z=Z[W.length],w=L[wi];w.w=true;W.push({n:w.n,z});save();busy=false;
+  $("wp").textContent="🎁 "+z;$("wn").textContent=w.n;$("win").style.display="block";lists();draw()})(t0);
+};
+$("padd").onclick=()=>{const n=$("pn").value.trim();if(!n){$("err").textContent="Pon el nombre del cliente.";return}$("err").textContent="";P.push({n,t:Math.max(1,+$("pt").value||1),w:false});$("pn").value="";save();lists();draw()};
+$("pbulk").onclick=()=>{$("bulk").value.split("\n").forEach(l=>{const [n,t]=l.split(",");if(n&&n.trim())P.push({n:n.trim(),t:Math.max(1,parseInt(t)||1),w:false})});$("bulk").value="";save();lists();draw()};
+$("zadd").onclick=()=>{const n=$("zn").value.trim();if(!n)return;Z.push(n);$("zn").value="";save();lists()};
+$("uniq").onchange=()=>{lists();draw()};
+$("reset").onclick=()=>{W=[];P.forEach(p=>p.w=false);$("win").style.display="none";save();lists();draw()};
+$("copy").onclick=async()=>{if(!W.length){$("err").textContent="Todavía no hay ganadores.";return}
+ try{await navigator.clipboard.writeText("🏆 SORTEO DigitalDen\n"+W.map(w=>`${w.z}: ${w.n}`).join("\n"));$("err").textContent="Ganadores copiados."}catch(e){$("err").textContent="No se pudo copiar automáticamente."}};
+lists();draw();
+</script></body></html>
